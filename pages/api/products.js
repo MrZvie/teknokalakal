@@ -14,13 +14,29 @@ export default async function handle(req, res) {
         }
     }
 
-    if(method === 'POST') {
-        const {title,description, price} = req.body;
+    if (method === 'POST') {
+        const { title, description, price } = req.body;
         const productDoc = await Product.create({
-            title,description,price,
-        })
+          title,
+          description,
+          price,
+          images: [], // Initialize images field as an empty array
+        });
+    
+        // Handle image upload
+        if (req.files) {
+          const images = await Promise.all(
+            req.files.map((file) => {
+              const imageUrl = `public/${file.filename}`;
+              return imageUrl;
+            })
+          );
+          productDoc.images = images;
+          await productDoc.save();
+        }
+    
         res.json(productDoc);
-    }
+      }
     if(method === 'PUT') {
         const {title,description, price,_id} = req.body;
         await Product.updateOne({_id},{title,description,price});

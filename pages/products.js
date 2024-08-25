@@ -69,9 +69,9 @@ export default function Products() {
               </tr>
             ) : (
               products.map((product) => (
-                <tr>
-                  <td>{product.title}</td>
-                  <td>
+                <tr key={product._id}>
+                  <td key={`title-${product._id}`}>{product.title}</td>
+                  <td key={`actions-${product._id}`}>
                     <Link href={"/products/edit/" + product._id}>
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
