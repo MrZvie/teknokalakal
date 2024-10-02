@@ -1,10 +1,12 @@
 import { mongooseConnect } from "@/lib/mongoose";
 import { Product } from "@/models/Products";
+import { isAdminRequest } from "./auth/[...nextauth]";
 
 
 export default async function handle(req, res) {
     const {method} = req;
     await mongooseConnect();
+    await isAdminRequest(req,res);
 
     if (method === 'GET') {
         if(req.query?.id) {
@@ -14,34 +16,27 @@ export default async function handle(req, res) {
         }
     }
 
-    if (method === 'POST') {
-        const { title, description, price } = req.body;
+    if(method === 'POST') {
+        const {title,description, price, stock, images, category, properties} = req.body;
         const productDoc = await Product.create({
-          title,
-          description,
-          price,
-          images: [], // Initialize images field as an empty array
-        });
-    
-        // Handle image upload
-        if (req.files) {
-          const images = await Promise.all(
-            req.files.map((file) => {
-              const imageUrl = `public/${file.filename}`;
-              return imageUrl;
-            })
-          );
-          productDoc.images = images;
-          await productDoc.save();
-        }
-    
+            title,
+            description,
+            price,
+            stock,
+            images,
+            category,
+            properties,
+        })
         res.json(productDoc);
-      }
-    if(method === 'PUT') {
-        const {title,description, price,_id} = req.body;
-        await Product.updateOne({_id},{title,description,price});
-        res.json(true);
     }
+    if (method === 'PUT') {
+        const {title,description, price, stock, images, category, properties, _id} = req.body;
+        const product = await Product.findById(_id);
+        const imagesToDelete = product.images.filter((image) => !images.includes(image));
+        await Promise.all(imagesToDelete.map((image) => axios.delete(`/api/upload/${image}`)));
+        await Product.updateOne({_id},{title,description,price, stock,images,category,properties});
+        res.json(true);
+      }
     if(method === 'DELETE') {
         if (req.query?.id) {
             await Product.deleteOne({_id:req.query?.id});
