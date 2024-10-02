@@ -1,40 +1,55 @@
 import axios from "axios";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Spinner from "./Spinner";
+import { ReactSortable } from "react-sortablejs";
 
 export default function ProductForm({
   _id,
   title: existingTitle,
   description: existingDescription,
   price: existingPrice,
-  images,
+  stock: existingStock,
+  images: existingImages,
+  category: assignedCategory,
+  properties: assignedProperties,
 }) {
   const [title, setTitle] = useState(existingTitle || "");
   const [description, setDescription] = useState(existingDescription || "");
+  const [category, setCategory] = useState(assignedCategory || "");
+  const [productProperties, setProductProperties] = useState(
+    assignedProperties || {}
+  );
   const [price, setPrice] = useState(existingPrice || "");
+  const [stock, setStock] = useState(existingStock || "");
+  const [images, setImages] = useState(existingImages || []);
   const [goToProducts, setGoToProducts] = useState(false);
+  const [isUploading, setUploading] = useState(false);
+  const [categories, SetCategories] = useState([]);
   const router = useRouter();
-  const [files, setFiles] = useState([]);
-  const [fileNames, setFileNames] = useState([]);
-  const [imageUrls, setImageUrls] = useState([]);
-  const [fileInputValue, setFileInputValue] = useState("");
+  useEffect(() => {
+    axios.get("/api/categories").then((result) => {
+      SetCategories(result.data);
+    });
+  }, []);
 
   async function saveProduct(ev) {
     ev.preventDefault();
-    const data = { title, description, price };
+    const data = {
+      title,
+      description,
+      price,
+      stock,
+      images,
+      category,
+      properties: productProperties,
+    };
     if (_id) {
-      // update
+      //update
       await axios.put("/api/products", { ...data, _id });
     } else {
-      // create
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("description", description);
-      formData.append("price", price);
-      if (files) {
-        formData.append("file", files);
-      }
-      await axios.post("/api/products", formData);
+      //create
+      await axios.post("/api/products", data);
     }
     setGoToProducts(true);
   }
@@ -42,113 +57,173 @@ export default function ProductForm({
     router.push("/products");
   }
 
-  const handleFileChange = (ev) => {
-    const newFile = ev.target.files[0];
-    setFiles((prevFiles) => [...prevFiles, newFile]);
-    setFileNames((prevFileNames) => [...prevFileNames, newFile.name]);
-    setImageUrls((prevImageUrls) => [...prevImageUrls, URL.createObjectURL(newFile)]);
-    setFileInputValue(""); // Clear the input value
-  };
+  async function uploadImages(ev) {
+    const files = ev.target?.files;
+    if (files?.length > 0) {
+      setUploading(true);
+      const formData = new FormData();
+      formData.append("file", files[0]);
+      const res = await axios.post("/api/upload", formData);
+      setImages((oldImages) => {
+        return [...oldImages, ...[res.data.link]];
+      });
+      setUploading(false);
+    }
+  }
 
-  const handleRemoveImage = (index) => {
-    setImageUrls((prevImageUrls) => prevImageUrls.filter((_, i) => i !== index));
-    setFileNames((prevFileNames) => prevFileNames.filter((_, i) => i !== index));
-    setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
-    setFileInputValue(""); // Clear the input value
-  };
+  function updateImagesOrder(images) {
+    setImages(images);
+  }
+  // handler for picking up the properties
+  const propertiesToFill = [];
+  if (categories.length > 0 && category) {
+    let catInfo = categories.find(({ _id }) => _id === category);
+    propertiesToFill.push(...catInfo.properties);
+    while (catInfo?.parent?._id) {
+      const parentCat = categories.find(
+        ({ _id }) => _id === catInfo?.parent?._id
+      );
+      propertiesToFill.push(...parentCat.properties);
+      catInfo = parentCat;
+    }
+  }
+
+  function setProductProp(propName, value) {
+    setProductProperties((prev) => {
+      const newProductProps = { ...prev };
+      newProductProps[propName] = value;
+      return newProductProps;
+    });
+  }
 
   return (
     <form onSubmit={saveProduct}>
-      <label>Product Name</label>
-      <input
-        type="text"
-        placeholder="product name"
-        value={title}
-        onChange={(ev) => setTitle(ev.target.value)}
-      />
-      <label>Photos</label>
-      <div className="mb-2 flex gap-2">
-        <label className="w-32 h-32 cursor-pointer border border-black bg-gray-300 text-center flex items-center justify-center text-gray-500 rounded-md text-sm gap-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="size-6"
+      <div key="product-name">
+        <label>Product Name</label>
+        <input
+          type="text"
+          placeholder="product name"
+          value={title}
+          onChange={(ev) => setTitle(ev.target.value)}
+        />
+      </div>
+      <div key="category">
+        <label>Category</label>
+        <select
+          value={category}
+          onChange={(ev) => setCategory(ev.target.value)}
+        >
+          <option value="">Uncategorized</option>
+          {categories.length > 0 &&
+            categories.map((c) => (
+              <option key={c._id} value={c._id}>
+                {c.name}
+              </option>
+            ))}
+        </select>
+      </div>
+      {propertiesToFill.length > 0 && propertiesToFill.map(p =>(
+        <div key={p.name}>
+          <label>{p.name[0].toUpperCase()+p.name.substring(1)}</label>
+          <select value={productProperties[p.name]} onChange={ev => setProductProp(p.name, ev.target.value)}>
+            {p.values.map(v => (
+              <option key={v} value={v}>{v}</option>
+            ))}
+          </select>
+        </div>
+      ))}
+      <div key="photos">
+        <label>Photos</label>
+        <div className="mb-2 flex flex-wrap gap-2">
+          <ReactSortable
+            list={images}
+            className="flex flex-wrap gap-2"
+            setList={updateImagesOrder}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"
-            />
-          </svg>
-          <div>Upload</div>
-          <input
-            type="file"
-            name="file"
-            onChange={handleFileChange}
-            value={fileInputValue}
-            className="hidden"
-          />
-        </label>
-        <div className="flex gap-2">
-          {imageUrls.length > 0 ? (
-            imageUrls.map((imageUrl, index) => (
-              <div key={index}>
-                <img
-                  src={imageUrl}
-                  alt={fileNames[index]}
-                  className="w-32 h-32 object-cover"
-                />
-                <button
-                  className="btn-red w-32 text-white rounded-md mt-1"
-                  onClick={() => handleRemoveImage(index)}
-                >
-                  Remove
-                </button>
-              </div>
-            ))
-          ) : images?.length > 0 ? (
-            images.map((image, index) => (
-              <img
-                key={index}
-                src={image}
-                alt={`Image ${index + 1}`}
-                className="w-32 h-32 object-cover"
-              />
-            ))
-          ) : (
-            <div>No photos in this product</div>
+            {!!images?.length &&
+              images.map((link) => (
+                <div key={link} className="h-32 mb-7 w-32">
+                  <img
+                    src={link}
+                    alt=""
+                    className="h-32 w-32 shadow-md mb-1 object-cover rounded-lg"
+                  />
+                  <button className="bg-redz text-white text-sm w-32 px-3 py-1 rounded-md">
+                    Remove
+                  </button>
+                </div>
+              ))}
+          </ReactSortable>
+          {isUploading && (
+            <div className="h-32 w-32 flex items-center">
+              <Spinner />
+            </div>
           )}
+
+          <label className="w-32 h-32 cursor-pointer border border-gray-300 bg-white shadow-md text-center flex items-center justify-center text-gray-500 rounded-md text-sm gap-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="size-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"
+              />
+            </svg>
+            <div>Upload</div>
+            <input type="file" onChange={uploadImages} className="hidden" />
+          </label>
+          {/* {!images?.length && <div>No photos in this product </div>} */}
         </div>
       </div>
-      <label>Description</label>
-      <textarea
-        placeholder="description"
-        value={description}
-        onChange={(ev) => setDescription(ev.target.value)}
-      ></textarea>
-      <label>Price (in Peso)</label>
-      <input
-        type="number"
-        placeholder="price"
-        value={price}
-        onChange={(ev) => setPrice(ev.target.value)}
-      />
-      <div className="flex gap-2">
-        <button type="submit" className="btn-primary">
-          Save
-        </button>
-        <button
-          type="button"
-          className="btn-red"
-          onClick={() => {
-            setGoToProducts(true);
-          }}
-        >
-          Cancel
-        </button>
+      <div key="description">
+        <label>Description</label>
+        <textarea
+          placeholder="description"
+          value={description}
+          onChange={(ev) => setDescription(ev.target.value)}
+        ></textarea>
+      </div>
+      <div key="price-and-stock">
+        <div className="flex w-full justify-between">
+          <div className="flex flex-col">
+            <label>Price (in Peso)</label>
+            <input
+              type="number"
+              placeholder="price"
+              value={price}
+              onChange={(ev) => setPrice(ev.target.value)}
+            />
+          </div>
+          <div className="flex flex-col">
+            <label>Stock</label>
+            <input
+              type="number"
+              placeholder="stock"
+              value={stock}
+              onChange={(ev) => setStock(ev.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+      <div key="buttons">
+        <div className="flex gap-2">
+          <button type="submit" className="btn-primary">
+            Save
+          </button>
+          <button
+            type="button"
+            className="btn-red"
+            onClick={() => router.push("/products")}
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </form>
   );
