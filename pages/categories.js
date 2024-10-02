@@ -2,6 +2,7 @@ import Layout from "@/components/Layout";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { withSwal } from "react-sweetalert2";
+import { v4 as uuidv4 } from 'uuid';
 
 
 function Categories({ swal }) {
@@ -76,30 +77,36 @@ function Categories({ swal }) {
         }
       });
   }
+
   function addProperty() {
     setProperties((prev) => {
-      return [...prev, { name: "", values: "" }];
+      return [...prev, { id: uuidv4(), name: "", values: "" }];
     });
   }
-  function handlePropertyNameChange(index, _property, newName) {
+  function handlePropertyNameChange(propertyId, newName) {
     setProperties((prev) => {
-      const properties = [...prev];
-      properties[index].name = newName;
-      return properties;
-    });
-  }
-  function handlePropertyValuesChange(index, _property, newValues) {
-    setProperties((prev) => {
-      const properties = [...prev];
-      properties[index].values = newValues;
-      return properties;
-    });
-  }
-  function removeProperty(indexToRemove) {
-    setProperties((prev) => {
-      return [...prev].filter((p, pIndex) => {
-        return pIndex !== indexToRemove;
+      return prev.map((property) => {
+        if (property.id === propertyId) {
+          return { ...property, name: newName };
+        }
+        return property;
       });
+    });
+  }
+  
+  function handlePropertyValuesChange(propertyId, newValues) {
+    setProperties((prev) => {
+      return prev.map((property) => {
+        if (property.id === propertyId) {
+          return { ...property, values: newValues };
+        }
+        return property;
+      });
+    });
+  }
+  function removeProperty(propertyId) {
+    setProperties((prev) => {
+      return [...prev].filter((p) => p.id !== propertyId);
     });
   }
   return (
@@ -125,7 +132,7 @@ function Categories({ swal }) {
             <option value="">No parent category</option>
             {categories.length > 0 &&
               categories.map((category) => (
-                <option value={category._id}>{category.name}</option>
+                <option key={category._id} value={category._id}>{category.name}</option>
               ))}
           </select>
         </div>
@@ -139,14 +146,14 @@ function Categories({ swal }) {
             Add New Property
           </button>
           {properties.length > 0 &&
-            properties.map((property, index) => (
-              <div className="flex gap-1 mb-2">
+            properties.map((property) => (
+              <div key={property.id} className="flex gap-1 mb-2">
                 <input
                   type="text"
                   className="mb-0"
                   value={property.name}
                   onChange={(ev) =>
-                    handlePropertyNameChange(index, property, ev.target.value)
+                    handlePropertyNameChange(property.id, ev.target.value)
                   }
                   placeholder="property name (example: color)"
                 />
@@ -155,12 +162,12 @@ function Categories({ swal }) {
                   className="mb-0"
                   value={property.values}
                   onChange={(ev) =>
-                    handlePropertyValuesChange(index, property, ev.target.value)
+                    handlePropertyValuesChange(property.id, ev.target.value)
                   }
                   placeholder="values (example: red), comma to separate it"
                 />
                 <button
-                  onClick={() => removeProperty(index)}
+                  onClick={() => removeProperty(property.id)}
                   type="button"
                   className="btn-red"
                 >
@@ -201,7 +208,7 @@ function Categories({ swal }) {
           <tbody>
             {categories.length > 0 &&
               categories.map((category) => (
-                <tr>
+                <tr key={category._id}>
                   <td>{category.name}</td>
                   <td>{category?.parent?.name}</td>
                   <td className=" w-14">
@@ -257,4 +264,4 @@ function Categories({ swal }) {
   );
 }
 
-export default withSwal(({ swal }, ref) => <Categories swal={swal} />);
+export default withSwal(({ swal }, _ref) => <Categories swal={swal} />);
