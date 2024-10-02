@@ -2,15 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-input, textarea {
-    @apply border border-blue-300 rounded-md px-1 mb-2 w-full;
+img{
+    max-height: 100%;
 }
-input:focus, textarea:focus{
+
+input, textarea, select {
+    @apply border border-blue-300 rounded-md px-2 py-1 mb-2 w-full;
+}
+input:focus, textarea:focus, select:focus{
     @apply border-blue-900;
 }
 
 h1{
-    @apply text-xl mb-2;
+    @apply text-xl mb-4;
 }
 
 label{
@@ -18,26 +22,29 @@ label{
 }
 
 .btn-primary{
-    @apply bg-bluez text-white px-4 py-1 rounded-md;
+    @apply bg-bluez text-white px-3 py-1 text-sm rounded-md;
 }
 table.basic tr td{
-    @apply border border-gray-300 p-1;
+    @apply border border-gray-300 px-4 py-1;
 }
 table.basic thead tr td{
-    @apply bg-blue-100;
+    @apply bg-blue-100 text-sm uppercase px-4 ;
 }
 table.basic{
-    @apply w-full;
+    @apply w-full shadow-md;
 }
 table.basic a{
-    @apply bg-blue-900 text-white text-sm py-1 px-2 rounded-md inline-flex gap-1 mr-2;
+    @apply btn-primary items-center inline-flex gap-1 mr-2;
+}
+table.basic a.link-red{
+    @apply bg-redz text-white px-2 py-1 rounded-md;
 }
 .btn-red{
-    @apply bg-redz text-white;
+    @apply bg-redz text-white text-sm;
 }
 .btn-default{
     @apply bg-gray-500 text-white;
 }
 .btn-red, .btn-default{
-    @apply px-4 py-1 rounded-md;
+    @apply px-3 py-1 rounded-md;
 }
