@@ -23,6 +23,7 @@ export default function ProductForm({
   const [price, setPrice] = useState(existingPrice || "");
   const [stock, setStock] = useState(existingStock || "");
   const [images, setImages] = useState(existingImages || []);
+  const [imagesToDelete, setImagesToDelete] = useState([]);
   const [goToProducts, setGoToProducts] = useState(false);
   const [isUploading, setUploading] = useState(false);
   const [categories, SetCategories] = useState([]);
@@ -43,6 +44,7 @@ export default function ProductForm({
       images,
       category,
       properties: productProperties,
+      imagesToDelete,
     };
     if (_id) {
       //update
@@ -65,15 +67,27 @@ export default function ProductForm({
       formData.append("file", files[0]);
       const res = await axios.post("/api/upload", formData);
       setImages((oldImages) => {
-        return [...oldImages, ...[res.data.link]];
+        return [...oldImages, { public_id: res.data.public_id, link: res.data.link }];
       });
       setUploading(false);
     }
   }
-
   function updateImagesOrder(images) {
     setImages(images);
   }
+  // to delete the photo in the array and the clooudinary too if the remove button has been clicked
+  function removePhoto(image) {
+    const newImages = [...images];
+    const imageIndex = newImages.findIndex((img) => img.public_id === image.public_id);
+    if (imageIndex !== -1) {
+      newImages.splice(imageIndex, 1);
+      setImages(newImages);
+      setImagesToDelete((prevImagesToDelete) => [...prevImagesToDelete, image.public_id]);
+    } else {
+      console.error("Image not found");
+    }
+  }
+
   // handler for picking up the properties
   const propertiesToFill = [];
   if (categories.length > 0 && category) {
@@ -122,16 +136,22 @@ export default function ProductForm({
             ))}
         </select>
       </div>
-      {propertiesToFill.length > 0 && propertiesToFill.map(p =>(
-        <div key={p.name}>
-          <label>{p.name[0].toUpperCase()+p.name.substring(1)}</label>
-          <select value={productProperties[p.name]} onChange={ev => setProductProp(p.name, ev.target.value)}>
-            {p.values.map(v => (
-              <option key={v} value={v}>{v}</option>
-            ))}
-          </select>
-        </div>
-      ))}
+      {propertiesToFill.length > 0 &&
+        propertiesToFill.map((p) => (
+          <div key={p.name}>
+            <label>{p.name[0].toUpperCase() + p.name.substring(1)}</label>
+            <select
+              value={productProperties[p.name]}
+              onChange={(ev) => setProductProp(p.name, ev.target.value)}
+            >
+              {p.values.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </div>
+        ))}
       <div key="photos">
         <label>Photos</label>
         <div className="mb-2 flex flex-wrap gap-2">
@@ -141,14 +161,17 @@ export default function ProductForm({
             setList={updateImagesOrder}
           >
             {!!images?.length &&
-              images.map((link) => (
-                <div key={link} className="h-32 mb-7 w-32">
+              images.map((image) => (
+                <div key={image.public_id} className="h-32 mb-7 w-32">
                   <img
-                    src={link}
+                    src={image.link}
                     alt=""
                     className="h-32 w-32 shadow-md mb-1 object-cover rounded-lg"
                   />
-                  <button className="bg-redz text-white text-sm w-32 px-3 py-1 rounded-md">
+                  <button
+                    onClick={() => removePhoto(image)}
+                    className="bg-redz text-white text-sm w-32 px-3 py-1 rounded-md"
+                  >
                     Remove
                   </button>
                 </div>
