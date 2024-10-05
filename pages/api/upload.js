@@ -8,8 +8,7 @@ cloudinary.config({
   url: process.env.CLOUDINARY_URL,
 });
 
-const uploadDir = 'upload/';
-const upload = multer({ dest: uploadDir }).single('file');
+const upload = multer({ dest: 'upload/' }).single('file');
 
 export default async function handler(req, res) {
   await mongooseConnect();

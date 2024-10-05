@@ -24,6 +24,7 @@ export const authOptions = {
       
     },
   },
+  secret: process.env.SECRET,
   timeout: 10000, // increase the timeout to 5 seconds
 };
 

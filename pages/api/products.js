@@ -28,7 +28,7 @@ export default async function handle(req, res) {
       price,
       stock,
       images,
-      category,
+      category: category || null,
       properties,
     });
     await deleteImages(imagesToDelete);
@@ -39,7 +39,9 @@ export default async function handle(req, res) {
     const { title, description, price, stock, images, category, properties, _id, imagesToDelete } = req.body;
     const product = await Product.findById(_id);
     const updatedImages = product.images.filter((image) => !imagesToDelete.includes(image.public_id));
-    await Product.updateOne({ _id }, { title, description, price, stock, images: updatedImages, category, properties });
+    const newImages = images.filter((image) => !updatedImages.find((img) => img.public_id === image.public_id));
+    updatedImages.push(...newImages);
+    await Product.updateOne({ _id }, { title, description, price, stock, images: updatedImages, category: category || null, properties });
     res.json(true);
   }
 
