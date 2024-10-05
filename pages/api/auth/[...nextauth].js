@@ -25,7 +25,7 @@ export const authOptions = {
     },
   },
   secret: process.env.SECRET,
-  timeout: 30000, // increase the timeout to 30 seconds
+  timeout: 20000, // increase the timeout to 20 seconds
 };
 
 export default NextAuth(authOptions);
