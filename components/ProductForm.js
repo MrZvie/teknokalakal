@@ -41,7 +41,7 @@ export default function ProductForm({
       description,
       price,
       stock,
-      images,
+      images: images.map((image) => ({ public_id: image.public_id, link: image.link })),
       category,
       properties: productProperties,
       imagesToDelete,
