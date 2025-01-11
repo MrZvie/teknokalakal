@@ -21,7 +21,7 @@ export default async function handle(req, res) {
   }
 
   if (method === 'POST') {
-    const { title, description, price, stock, images, category, properties, imagesToDelete } = req.body;
+    const { title, description, price, stock, images, category, parentCategory, properties, imagesToDelete } = req.body;
     const productDoc = await Product.create({
       title,
       description,
@@ -29,6 +29,7 @@ export default async function handle(req, res) {
       stock,
       images,
       category: category || null,
+      parentCategory: parentCategory || null, 
       properties,
     });
     await deleteImages(imagesToDelete);
@@ -36,12 +37,24 @@ export default async function handle(req, res) {
   }
 
   if (method === 'PUT') {
-    const { title, description, price, stock, images, category, properties, _id, imagesToDelete } = req.body;
+    const { title, description, price, stock, images, category, parentCategory, properties, _id, imagesToDelete } = req.body;
     const product = await Product.findById(_id);
     const updatedImages = product.images.filter((image) => !imagesToDelete.includes(image.public_id));
     const newImages = images.filter((image) => !updatedImages.find((img) => img.public_id === image.public_id));
     updatedImages.push(...newImages);
-    await Product.updateOne({ _id }, { title, description, price, stock, images: updatedImages, category: category || null, properties });
+    await Product.updateOne(
+      { _id },
+      {
+        title,
+        description,
+        price,
+        stock,
+        images: updatedImages,
+        category: category || null,
+        parentCategory: parentCategory || null,
+        properties,
+      }
+    );
     res.json(true);
   }
 

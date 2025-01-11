@@ -5,11 +5,12 @@ import { useEffect, useState } from "react";
 
 export default function OrderPage() {
   const [orders, setOrders] = useState([]);
+  
   useEffect(() => {
-      axios.get('api/orders').then(response => {
-        console.log("Received data:", response.data);
-          setOrders(response.data);
-      })
+    axios.get('api/orders').then(response => {
+      console.log("Received data:", response.data);
+      setOrders(response.data);
+    });
   }, []);
 
   const formatDate = (dateString) => {
@@ -47,10 +48,10 @@ export default function OrderPage() {
 
   return (
     <Layout>
-      <h1 className="text-2xl md:text-3xl font-bold mb-3 text-gray-800">Orders</h1>
+      <h1 className="text-2xl lg:text-3xl font-bold mb-3 text-gray-800">Orders</h1>
 
       {/* Table view for larger screens */}
-      <div className="hidden md:block shadow-lg rounded-lg overflow-hidden border border-gray-200 bg-white">
+      <div className="hidden lg:block shadow-lg rounded-lg overflow-hidden border border-gray-200 bg-white">
         <table className="w-full table-auto text-sm">
           <thead className="bg-gray-100">
             <tr>
@@ -112,7 +113,7 @@ export default function OrderPage() {
       </div>
 
       {/* Card view for smaller screens */}
-      <div className="block md:hidden space-y-4">
+      <div className="block lg:hidden space-y-4">
         {orders.length > 0 ? (
           orders.map(order => (
             <div key={order._id} className="bg-white border border-gray-200 rounded-lg shadow-md p-4">

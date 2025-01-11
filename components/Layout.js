@@ -1,25 +1,36 @@
-import Nav from "@/components/Nav";
-import { useSession, signIn, signOut } from "next-auth/react"
-import { useState } from "react";
-import Logo from "./Logo";
+import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react'; // Import useSession hook
+import { useRouter } from 'next/router'; // Import useRouter hook
+import LoadingIndicator from '@/components/LoadingIndicator';
+import Logo from './Logo';
+import Nav from '@/components/Nav';
 
-export default function Layout({children}) {
-  const [showNav,setShowNav] = useState(false);
-  const { data: session } = useSession();
-  if(!session){
+export default function Layout({ children }) {
+  const { data: session, status } = useSession(); // Access session data and status
+  const router = useRouter();
+  const [showNav, setShowNav] = useState(false); // Manage visibility of the navigation menu
+
+  // console.log("Session data:", session);
+  
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status, router]);
+
+  // Display loading indicator while session is loading
+  if (status === "loading") {
     return (
-    <div className="bg-aqua-forest-600 w-screen h-screen flex items-center">
-      <div className="text-center w-full">
-        <button onClick={() => signIn('google')} className="bg-white p-2 px-4 rounded-lg">
-          Login with Google
-        </button>
+      <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 bg-aqua-forest-300 z-50">
+        <LoadingIndicator />
       </div>
-    </div>
     );
   }
+
   return (
-    <div className="bg-aqua-forest-600 min-h-screen ">
-      <div className=" md:hidden text-white flex items-center p-2">
+    <div className="bg-aqua-forest-600 min-h-screen">
+      {/* Mobile navigation button */}
+      <div className="md:hidden text-white flex items-center p-2">
         <button onClick={() => setShowNav(true)}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -40,9 +51,11 @@ export default function Layout({children}) {
           <Logo />
         </div>
       </div>
+
       <div className="flex">
-        <Nav show={showNav}/>
-        <div className="bg-white flex-grow sm:mt-0 sm:ml-5 sm:mr-5 md:mt-10 mb-10 md:ml-0 mr-10 rounded-lg p-4 overflow-y-auto h-[530px]">
+        {/* Nav component */}
+        <Nav show={showNav} />
+        <div className="bg-white flex-grow sm:mt-0 sm:ml-5 sm:mr-5 md:mt-10 mb-10 mr-0 md:ml-0 rounded-lg p-4 overflow-y-auto h-[530px]">
           {children}
         </div>
       </div>
