@@ -1,19 +1,27 @@
 import mongoose, { model, models, Schema } from "mongoose";
 
-
 const ProductSchema = new Schema({
-    title: {type: String, required: true},
+    vendorId: { type: mongoose.Types.ObjectId, ref: "Vendor" },
+    title: { type: String, required: true },
     description: String,
-    price: {type: Number, required: true},
-    stock: {type: Number, required: true},
+    price: { type: Number, required: true },
+    stock: { type: Number, required: true },
     images: [
         {
           public_id: { type: String },
           link: { type: String },
         },
-      ],
-    category: {type: mongoose.Types.ObjectId, ref: 'Category'},
-    properties: {type: Object},
+    ],
+    reviews: [
+      {
+        userId: { type: Schema.Types.ObjectId, ref: "User" },
+        rating: Number,
+        comment: String,
+      }
+    ],
+    category: { type: mongoose.Types.ObjectId, ref: 'Category' }, // child category
+    parentCategory: { type: mongoose.Types.ObjectId, ref: 'Category' }, // parent category
+    properties: { type: Object },
 }, {
   timestamps: true,
 });

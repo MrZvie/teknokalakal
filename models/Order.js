@@ -2,11 +2,13 @@ const { Schema, models, model } = require("mongoose");
 
 const OrderSchema = new Schema(
   {
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     line_items: Object,
     name: String,
     email: String,
     phone: String,
     reference_number: String,
+    shippingFee: { type: Number, required: true },
     address: {
       streetAddress: String,
       barangay: String,
@@ -17,6 +19,11 @@ const OrderSchema = new Schema(
     status: {
       type: String,
       enum: ['pending', 'paid', 'failed', 'refunded', 'insufficient_funds', 'cancelled', 'checkout_cancelled', 'checkout_expired'],
+      default: 'pending'
+    },
+    shipping_statuss: {
+      type: String,
+      enum: ['pending','awaiting_courier', 'shipped', 'delivered', 'cancelled'],
       default: 'pending'
     },
     statusDescription: {
