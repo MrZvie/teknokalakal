@@ -2,8 +2,9 @@ import axios from "axios";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Spinner from "./Spinner";
-import { ReactSortable } from "react-sortablejs";
 import swal from "sweetalert2";
+import XIcon from "./icons/XIcon";
+import { CldUploadWidget } from "next-cloudinary";
 
 export default function ProductForm({
   _id,
@@ -14,6 +15,7 @@ export default function ProductForm({
   images: existingImages,
   category: assignedCategory,
   properties: assignedProperties,
+  videoLink: existingVideoLink,
 }) {
   const [title, setTitle] = useState(existingTitle || "");
   const [description, setDescription] = useState(existingDescription || "");
@@ -25,9 +27,9 @@ export default function ProductForm({
   const [images, setImages] = useState(existingImages || []);
   const [imagesToDelete, setImagesToDelete] = useState([]);
   const [goToProducts, setGoToProducts] = useState(false);
-  const [isUploading, setUploading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [videoLink, setVideoLink] = useState(existingVideoLink || '');
   const router = useRouter();
 
   useEffect(() => {
@@ -110,7 +112,7 @@ export default function ProductForm({
 
 
   if (goToProducts) {
-    router.push("/vendor/products");
+    router.push("/products");
   }
 
   function handleCategoryChange(ev) {
@@ -125,24 +127,11 @@ export default function ProductForm({
       setParentCategory(""); // Reset if there's no parent
     }
   }
-
-  async function uploadImages(ev) {
-    const files = ev.target?.files;
-    if (files?.length > 0) {
-      setUploading(true);
-      const formData = new FormData();
-      formData.append("file", files[0]);
-      const res = await axios.post("/api/upload", formData);
-      setImages((oldImages) => {
-        return [...oldImages, { public_id: res.data.public_id, link: res.data.link }];
-      });
-      setUploading(false);
-    }
-  }
   
-  function updateImagesOrder(images) {
-    setImages(images);
-  }
+  const handleImageUpload = (info) => {
+    const newImage = { link: info.secure_url, public_id: info.public_id, };
+    setImages((prev) => [...prev, newImage]);
+  };
 
   function removePhoto(image) {
     const newImages = [...images];
@@ -150,7 +139,7 @@ export default function ProductForm({
     if (imageIndex !== -1) {
       newImages.splice(imageIndex, 1);
       setImages(newImages);
-      setImagesToDelete((prevImagesToDelete) => [...prevImagesToDelete, image.public_id]);
+      setImagesToDelete((prevImagesToDelete) => [...prevImagesToDelete, image]);
     } else {
       console.error("Image not found");
     }
@@ -205,173 +194,78 @@ export default function ProductForm({
   }
 
   return (
-    <form onSubmit={saveProduct}>
-      <div>
-        <label>Product Name</label>
-        <input
-          type="text"
-          placeholder="product name"
-          value={title}
-          onChange={(ev) => setTitle(ev.target.value)}
-        />
-      </div>
-      <div>
-        <label>Properties</label>
-        {productProperties.map((property, index) => (
-          <div
-            key={index}
-            className="bg-white border p-3 rounded-md shadow-sm mb-4"
+    <form onSubmit={saveProduct}
+    disabled={isSaving}
+    className={`p-6 bg-white rounded-lg shadow-lg ${
+      isSaving ? "opacity-50 pointer-events-none" : ""
+    }`}
+    >
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-5 justify-between items-center mb-3">
+        <div className="w-full sm:w-1/2">
+          <label>Product Name</label>
+          <input
+            type="text"
+            placeholder="product name"
+            value={title}
+            onChange={(ev) => setTitle(ev.target.value)}
+          />
+        </div>
+        <div className="w-full sm:w-1/2">
+          <label>Category</label>
+          <select
+            value={category}
+            onChange={handleCategoryChange} // Update handler
           >
-            {/* Property Name */}
-            <div className="mb-2">
-              <label className="block text-sm font-medium mb-1">
-                Property Name
-              </label>
-              <input
-                className="w-full p-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                type="text"
-                value={property.name}
-                onChange={(ev) =>
-                  handlePropertyNameChange(index, ev.target.value)
-                }
-                placeholder="Enter property name"
-              />
-            </div>
-
-            {/* Property Values */}
-            <div className="mb-3">
-              <label className="block text-sm font-medium mb-1">Values</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mb-2 gap-3 justify-items-center justify-self-center">
-                {property.values.map((value, vIndex) => (
-                  <div
-                    key={vIndex}
-                    className="flex items-center flex-col justify-center space-x-2 w-full"
-                  >
-                    <input
-                      className="w-full p-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                      type="text"
-                      value={value}
-                      onChange={(ev) => {
-                        const newValues = [...property.values];
-                        newValues[vIndex] = ev.target.value;
-                        handlePropertyValuesChange(index, newValues);
-                      }}
-                      placeholder="Enter value"
-                    />
-                    <button
-                      type="button"
-                      className="btn-red w-full mb-2 hover:bg-red-400 hover:scale-105"
-                      onClick={() => removeValue(index, vIndex)}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-
-                {/* Add New Value Button */}
-                <div className="col-span-1 flex items-center justify-center mt-2 sm:col-span-2 md:col-span-1">
-                  <button
-                    type="button"
-                    className="btn-primary hover:bg-blue-400 hover:scale-105 w-full"
-                    onClick={() => {
-                      const newValues = [...property.values, ""];
-                      handlePropertyValuesChange(index, newValues);
-                    }}
-                  >
-                    Add Value
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Remove Property */}
-            <button
-              type="button"
-              className="btn-red hover:bg-red-400 hover:scale-105"
-              onClick={() => removeProperty(index)}
-            >
-              Remove Property
-            </button>
-          </div>
-        ))}
-
-        {/* Add New Property */}
-        <button
-          type="button"
-          className="mb-3 ml-3 bg-green-500 text-white text-sm hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 px-4 py-2 rounded-lg shadow-lg transform transition-all duration-300 hover:scale-105"
-          onClick={addProperty}
-        >
-          Add Property
-        </button>
-      </div>
-
-      <div>
-        <label>Category</label>
-        <select
-          value={category}
-          onChange={handleCategoryChange} // Update handler
-        >
-          <option value="">Uncategorized</option>
-          {categories.length > 0 &&
-            categories.map((c) => (
-              <option key={c._id} value={c._id}>
-                {c.name}
-              </option>
-            ))}
-        </select>
-      </div>
-      <div key="photos">
-        <label>Photos</label>
-        <div className="mb-2 flex flex-wrap gap-2">
-          <ReactSortable
-            list={images}
-            className="flex flex-wrap gap-2"
-            setList={updateImagesOrder}
-          >
-            {!!images?.length &&
-              images.map((image) => (
-                <div key={image.public_id} className="h-32 mb-7 w-32">
-                  <img
-                    src={image.link}
-                    alt=""
-                    className="h-32 w-32 shadow-md mb-1 object-cover rounded-lg"
-                  />
-                  <button
-                    onClick={() => removePhoto(image)}
-                    className="bg-redz text-white text-sm w-32 px-3 py-1 rounded-md"
-                  >
-                    Remove
-                  </button>
-                </div>
+            <option value="">Uncategorized</option>
+            {categories.length > 0 &&
+              categories.map((c) => (
+                <option key={c._id} value={c._id}>
+                  {c.name}
+                </option>
               ))}
-          </ReactSortable>
-          {isUploading && (
-            <div className="h-32 w-32 flex items-center">
-              <Spinner />
-            </div>
-          )}
-
-          <label className="w-32 h-32 cursor-pointer border border-gray-300 bg-white shadow-md text-center flex items-center justify-center text-gray-500 rounded-md text-sm gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="size-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"
-              />
-            </svg>
-            <div>Upload</div>
-            <input type="file" onChange={uploadImages} className="hidden" />
-          </label>
-          {/* {!images?.length && <div>No photos in this product </div>} */}
+          </select>
         </div>
       </div>
+
+      <div key="photos">
+        <label>Photos</label>
+        <div className="flex flex-wrap items-center md:items-start justify-center md:justify-start gap-4">
+          {images.map((image) => (
+            <div key={image.id} className="relative">
+              <img
+                src={image.link}
+                alt=""
+                className="w-24 h-24 shadow-md mb-1 object-cover rounded-lg"
+              />
+              <button
+                onClick={() => removePhoto(image)}
+                className="absolute bg-redz top-0 right-0 text-white py-1p-1 rounded-md"
+              >
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+          ))}
+
+          <CldUploadWidget
+            signatureEndpoint="/api/sign-cloudinary-params"
+            options={{
+              sources: ["local", "google_drive"],
+            }}
+            onSuccess={(result) => handleImageUpload(result.info)}
+          >
+            {({ open }) => (
+              <button
+                type="button"
+                onClick={() => open()}
+                className="cursor-pointer flex items-center justify-center w-24 h-24 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-500"
+              >
+                Add Photo
+              </button>
+            )}
+          </CldUploadWidget>
+        </div>
+      </div>
+
       <div>
         <label>Description</label>
         <textarea
@@ -400,6 +294,94 @@ export default function ProductForm({
           />
         </div>
       </div>
+
+      <div className="mb-3">
+        <label>
+          Link tutorial video
+        </label>
+        <input
+          type="text"
+          value={videoLink}
+          placeholder="Paste video URL"
+          onChange={(ev) => setVideoLink(ev.target.value)}
+          className="w-full p-2 border rounded-lg"
+        />
+      </div>
+
+      <div className="mb-3">
+        <label className="block text-sm font-medium text-green-900">
+          Properties
+        </label>
+        {productProperties.map((property, index) => (
+          <div key={index} className="mb-4 p-4 bg-gray-50 rounded-lg shadow-md">
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-green-900">
+                Property Name
+              </label>
+              <input
+                type="text"
+                value={property.name}
+                onChange={(ev) =>
+                  handlePropertyNameChange(index, ev.target.value)
+                }
+                className="w-full p-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-green-900">
+                Values
+              </label>
+              {property.values.map((value, vIndex) => (
+                <div key={vIndex} className="flex items-center gap-3 mt-3">
+                  <input
+                    type="text"
+                    value={value}
+                    onChange={(ev) => {
+                      const newValues = [...property.values];
+                      newValues[vIndex] = ev.target.value;
+                      handlePropertyValuesChange(index, newValues);
+                    }}
+                    className="w-full m-0 p-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeValue(index, vIndex)}
+                    className="bg-red-500 text-white md:px-3 p-2 md:py-3 rounded-md hover:bg-red-600"
+                  >
+                    <XIcon className="w-5 h-5" />
+                  </button>
+                </div>
+              ))}
+              <div className="flex items-center justify-start mt-3 text-[12px] sm:text-sm md:text-base gap-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    handlePropertyValuesChange(index, [...property.values, ""])
+                  }
+                  className=" bg-blue-500 text-white px-2 md:px-3 py-1 rounded-lg shadow-md hover:bg-blue-600 hover:scale-105"
+                >
+                  Add Value
+                </button>
+                <button
+                  type="button"
+                  className="bg-red-500 text-white px-2 md:px-3 py-1 rounded-lg shadow-md hover:bg-red-600 hover:scale-105"
+                  onClick={() => removeProperty(index)}
+                >
+                  Remove Property
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={addProperty}
+          className=" bg-green-500 text-white md:px-3 px-2 py-1 md:py-1 rounded-lg shadow-md hover:bg-green-600"
+        >
+          Add Property
+        </button>
+      </div>
+
       <div key="buttons">
         <div className="flex gap-2">
           <button

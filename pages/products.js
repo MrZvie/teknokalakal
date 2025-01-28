@@ -116,7 +116,7 @@ function Products({ swal }) {
             filteredProducts.map((product) => (
               <div
                 key={product._id}
-                className="border border-gray-200 shadow-md rounded-lg p-4 bg-white"
+                className="border border-gray-200 shadow-md rounded-lg p-4 bg-white flex flex-col justify-between"
               >
                 <h2 className="text-lg font-semibold mb-2">{product.title}</h2>
                 <p className="text-gray-700 mb-2">
@@ -145,7 +145,7 @@ function Products({ swal }) {
             ))
           ) : (
             <p className="text-gray-500">
-              No products match your search.
+              No products found.
             </p>
           )}
         </div>

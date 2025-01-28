@@ -95,7 +95,7 @@ export const authOptions = {
       return token;
     },
     async session({ session, token }) {
-      console.log("Session callback", { session, token });
+      // console.log("Session callback", { session, token });
       // Populate session.user with JWT token data
       if (token) {
         session.user = {

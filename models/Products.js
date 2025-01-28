@@ -1,11 +1,12 @@
 import mongoose, { model, models, Schema } from "mongoose";
 
 const ProductSchema = new Schema({
-    vendorId: { type: mongoose.Types.ObjectId, ref: "Vendor" },
+    vendorId: { type: Schema.Types.ObjectId, ref: "Vendor", default: null },
     title: { type: String, required: true },
     description: String,
     price: { type: Number, required: true },
     stock: { type: Number, required: true },
+    sold: { type: Number, default: 0 },
     images: [
         {
           public_id: { type: String },
@@ -15,12 +16,13 @@ const ProductSchema = new Schema({
     reviews: [
       {
         userId: { type: Schema.Types.ObjectId, ref: "User" },
-        rating: Number,
+        rating: { type: Number, min: 1, max: 5 },
         comment: String,
       }
     ],
-    category: { type: mongoose.Types.ObjectId, ref: 'Category' }, // child category
-    parentCategory: { type: mongoose.Types.ObjectId, ref: 'Category' }, // parent category
+    videoLink: { type: String },
+    category: { type: Schema.Types.ObjectId, ref: 'Category' }, // child category
+    parentCategory: { type: Schema.Types.ObjectId, ref: 'Category' }, // parent category
     properties: { type: Object },
 }, {
   timestamps: true,

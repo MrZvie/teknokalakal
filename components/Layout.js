@@ -55,7 +55,7 @@ export default function Layout({ children }) {
       <div className="flex">
         {/* Nav component */}
         <Nav show={showNav} />
-        <div className="bg-white flex-grow sm:mt-0 sm:ml-5 sm:mr-5 md:mt-10 mb-10 mr-0 md:ml-0 rounded-lg p-4 overflow-y-auto h-[530px]">
+        <div className="bg-white flex-grow sm:mt-0 sm:ml-5 sm:mr-5 md:mt-5 mb-5 mr-0 md:ml-0 rounded-lg p-4 overflow-y-auto h-[690px]">
           {children}
         </div>
       </div>
