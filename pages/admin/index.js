@@ -245,7 +245,7 @@ const AddAdmin = ({ swal }) => {
                       className="text-blue-600 hover:text-blue-800 transition-all"
                     >
                       <button className="bg-aqua-forest-500 hover:bg-green-600 text-white font-medium py-1 px-3 rounded-lg transition">
-                        Edit
+                        View
                       </button>
                     </Link>
                     <button

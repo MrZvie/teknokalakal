@@ -6,7 +6,7 @@ import swal from "sweetalert2";
 import XIcon from "./icons/XIcon";
 import { CldUploadWidget } from "next-cloudinary";
 
-export default function ProductForm({
+export default function ProductView({
   _id,
   title: existingTitle,
   description: existingDescription,
@@ -195,7 +195,7 @@ export default function ProductForm({
   }
 
   return (
-    <form
+    <section
       onSubmit={saveProduct}
       disabled={isSaving}
       className={`p-6 bg-white rounded-lg shadow-lg ${
@@ -206,6 +206,7 @@ export default function ProductForm({
         <div className="w-full sm:w-1/2">
           <label>Product Name</label>
           <input
+            disabled
             type="text"
             placeholder="product name"
             value={title}
@@ -216,6 +217,7 @@ export default function ProductForm({
           <label>Category</label>
           <select
             value={category}
+            disabled
             onChange={handleCategoryChange} // Update handler
           >
             <option value="">Uncategorized</option>
@@ -239,12 +241,6 @@ export default function ProductForm({
                 alt=""
                 className="w-24 h-24 shadow-md mb-1 object-cover rounded-lg"
               />
-              <button
-                onClick={() => removePhoto(image)}
-                className="absolute bg-redz top-0 right-0 text-white py-1p-1 rounded-md"
-              >
-                <XIcon className="w-5 h-5" />
-              </button>
             </div>
           ))}
 
@@ -255,15 +251,7 @@ export default function ProductForm({
             }}
             onSuccess={(result) => handleImageUpload(result.info)}
           >
-            {({ open }) => (
-              <button
-                type="button"
-                onClick={() => open()}
-                className="cursor-pointer flex items-center justify-center w-24 h-24 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-500"
-              >
-                Add Photo
-              </button>
-            )}
+            {({ open }) => <div></div>}
           </CldUploadWidget>
         </div>
       </div>
@@ -271,6 +259,7 @@ export default function ProductForm({
       <div>
         <label>Description</label>
         <textarea
+          disabled
           placeholder="description"
           value={description}
           onChange={(ev) => setDescription(ev.target.value)}
@@ -280,6 +269,7 @@ export default function ProductForm({
         <div className="flex flex-col w-[45%]">
           <label>Price (in PHP)</label>
           <input
+            disabled
             type="number"
             placeholder="price"
             value={price}
@@ -289,6 +279,7 @@ export default function ProductForm({
         <div className="flex flex-col w-[45%]">
           <label>Stock</label>
           <input
+            disabled
             type="number"
             placeholder="stock"
             value={stock}
@@ -301,6 +292,7 @@ export default function ProductForm({
         <label>Link tutorial video</label>
         <input
           type="text"
+          disabled
           value={videoLink}
           placeholder="Paste video URL"
           onChange={(ev) => setVideoLink(ev.target.value)}
@@ -310,9 +302,7 @@ export default function ProductForm({
 
       {businessName && (
         <div className="mb-4">
-          <label className="block font-semibold text-gray-700">
-            Shop
-          </label>
+          <label className="block font-semibold text-gray-700">Shop</label>
           <div className="p-2 bg-gray-100 rounded text-gray-900">
             {businessName}
           </div>
@@ -331,6 +321,7 @@ export default function ProductForm({
               </label>
               <input
                 type="text"
+                disabled
                 value={property.name}
                 onChange={(ev) =>
                   handlePropertyNameChange(index, ev.target.value)
@@ -346,6 +337,7 @@ export default function ProductForm({
                 <div key={vIndex} className="flex items-center gap-3 mt-3">
                   <input
                     type="text"
+                    disabled
                     value={value}
                     onChange={(ev) => {
                       const newValues = [...property.values];
@@ -354,68 +346,26 @@ export default function ProductForm({
                     }}
                     className="w-full m-0 p-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   />
-                  <button
-                    type="button"
-                    onClick={() => removeValue(index, vIndex)}
-                    className="bg-red-500 text-white md:px-3 p-2 md:py-3 rounded-md hover:bg-red-600"
-                  >
-                    <XIcon className="w-5 h-5" />
-                  </button>
+                  
                 </div>
               ))}
-              <div className="flex items-center justify-start mt-3 text-[12px] sm:text-sm md:text-base gap-3">
-                <button
-                  type="button"
-                  onClick={() =>
-                    handlePropertyValuesChange(index, [...property.values, ""])
-                  }
-                  className=" bg-blue-500 text-white px-2 md:px-3 py-1 rounded-lg shadow-md hover:bg-blue-600 hover:scale-105"
-                >
-                  Add Value
-                </button>
-                <button
-                  type="button"
-                  className="bg-red-500 text-white px-2 md:px-3 py-1 rounded-lg shadow-md hover:bg-red-600 hover:scale-105"
-                  onClick={() => removeProperty(index)}
-                >
-                  Remove Property
-                </button>
-              </div>
             </div>
           </div>
         ))}
-        <button
-          type="button"
-          onClick={addProperty}
-          className=" bg-green-500 text-white md:px-3 px-2 py-1 md:py-1 rounded-lg shadow-md hover:bg-green-600"
-        >
-          Add Property
-        </button>
       </div>
 
       <div key="buttons">
-        <div className="flex gap-2">
-          <button
-            type="submit"
-            className={`btn-primary ${
-              isSaving ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-            disabled={isSaving}
-          >
-            {isSaving ? "Saving..." : "Save Product"}
-          </button>
           <button
             type="button"
-            className={`btn-red ${
+            className={`btn-red p-2 text-2xl ${
               isSaving ? "opacity-50 cursor-not-allowed" : ""
             }`}
             disabled={isSaving}
             onClick={() => router.push("/products")}
           >
-            Cancel
-          </button>
-        </div>
+            Return
+          </button>        
       </div>
-    </form>
+    </section>
   );
 }

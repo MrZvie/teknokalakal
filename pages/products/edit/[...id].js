@@ -1,9 +1,9 @@
 import Layout from "@/components/Layout";
-import ProductForm from "@/components/ProductForm";
 import axios from "axios";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import LoadingIndicator from "@/components/LoadingIndicator";
+import ProductView from "@/components/ProductView";
 
 export default function EditProductPage() {
     const [productInfo, setProductInfo] = useState(null);
@@ -27,13 +27,15 @@ export default function EditProductPage() {
 
     return (
         <Layout>
-            <h1>Edit Product</h1>
+            <h1 className="text-2xl font-bold mb-0">Product Details</h1>
             {loading ? (
-                <LoadingIndicator /> 
+                <div className="flex justify-center items-center h-64">
+                    <LoadingIndicator />
+                </div>
+            ) : productInfo ? (
+                <ProductView {...productInfo} />
             ) : (
-                productInfo && (
-                    <ProductForm {...productInfo} />
-                )
+                <p className="text-gray-500">No product information available.</p>
             )}
         </Layout>
     );

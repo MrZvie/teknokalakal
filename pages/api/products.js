@@ -1,5 +1,6 @@
 import { mongooseConnect } from "@/lib/mongoose";
 import { Product } from "@/models/Products";
+import { Vendor } from "@/models/Vendor";
 import { isAdminRequest } from "./auth/[...nextauth]";
 import { v2 as cloudinary } from 'cloudinary';
 
@@ -22,10 +23,49 @@ export default async function handle(req, res) {
   await isAdminRequest(req, res);
 
   if (method === 'GET') {
-    if (req.query?.id) {
-      res.json(await Product.findOne({ _id: req.query.id }));
-    } else {
-      res.json(await Product.find());
+    try {
+      if (req.query?.id) {
+        const product = await Product.findOne({ _id: req.query.id }).lean();
+  
+        if (!product) {
+          return res.status(404).json({ error: "Product not found" });
+        }
+  
+        if (product.vendorId) {
+          const vendor = await Vendor.findOne({ userId: product.vendorId }).lean();
+          if (vendor?.businessInfo?.name) {
+            product.businessName = vendor.businessInfo.name;
+          }
+          if (vendor.name) {
+            product.vendorName = vendor.name;
+          }
+          if (vendor.email) {
+            product.vendorEmail = vendor.email;
+          }
+        }
+  
+        return res.json(product);
+      } else {
+        const products = await Product.find().lean();
+  
+        // Add business names to each product
+        const vendorMap = {};
+        for (const product of products) {
+          const vendorId = product.vendorId?.toString();
+          if (vendorId) {
+            if (!vendorMap[vendorId]) {
+              const vendor = await Vendor.findOne({ userId: vendorId }).lean();
+              vendorMap[vendorId] = vendor?.businessInfo?.name || null;
+            }
+            product.businessName = vendorMap[vendorId];
+          }
+        }
+  
+        return res.json(products);
+      }
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      res.status(500).json({ error: "Failed to fetch products" });
     }
   }
 

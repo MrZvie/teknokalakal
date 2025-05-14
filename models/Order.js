@@ -35,6 +35,15 @@ const OrderSchema = new Schema(
       enum: ['insufficient_funds', 'card_declined', 'expired_card', 'processing_error', null],
       default: null
     },
+    refundRequested: {
+      type: Boolean,
+      default: false,
+    },
+    refundStatus: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
+    },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
   },

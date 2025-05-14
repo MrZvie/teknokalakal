@@ -1,7 +1,7 @@
 const { Schema, models, model } = require("mongoose");
 
 const VendorSchema = new Schema({
-    vendorId: { type: Schema.Types.ObjectId, ref: "User" },
+    userId: { type: Schema.Types.ObjectId, ref: "User" },
     businessInfo: {
       name: String,
       description: String,

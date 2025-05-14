@@ -58,11 +58,11 @@ function Products({ swal }) {
     setSearchQuery(query);
     filterProducts(query); // Apply search filter
   };
-
+  
   const filterProducts = (query) => {
     let filtered = [...products]; // Start with the full list of products
     
-    // Apply search query filter (optional)
+    // Apply search query filter (optional
     if (query) {
       filtered = filtered.filter((product) =>
         product.title.toLowerCase().includes(query.toLowerCase())
@@ -89,16 +89,14 @@ function Products({ swal }) {
             }
           }}
           className={`bg-blue-500 hover:bg-blue-600 sm:text-sm md:text-xl text-[12px] sm:px-2 text-center text-white font-medium py-2 px-4 rounded-lg transition ${
-            deleting || loading
-              ? "opacity-50 cursor-not-allowed "
-              : ""
+            deleting || loading ? "opacity-50 cursor-not-allowed " : ""
           }`}
         >
           Add New Product
         </Link>
       </div>
 
-      <div className="flex items-center gap-4 mb-4">
+      <div className="flex gap-4 mb-4 items-center">
         <input
           type="text"
           value={searchQuery}
@@ -127,11 +125,25 @@ function Products({ swal }) {
                 <p className="text-gray-700 font-medium mb-2">
                   Price: {formatPrice(product.price)}
                 </p>
-                <p className="text-gray-500 mb-4">Stock: {product.stock}</p>
+                <p className="text-gray-500 mb-2">Sold: {product.sold}</p>
+                <p className="text-gray-500 mb-2">
+                  Rating:{" "}
+                  {product.reviews?.length > 0
+                    ? (
+                        product.reviews.reduce((sum, r) => sum + r.rating, 0) /
+                        product.reviews.length
+                      ).toFixed(1)
+                    : 0}{" "}
+                  ★ ({product.reviews?.length || 0} review
+                  {product.reviews?.length === 1 ? "" : "s"})
+                </p>
+                <p className="text-gray-500 mb-4">
+                  Shop: {product.businessName || "Unknown"}
+                </p>
                 <div className="flex justify-end gap-2">
                   <Link href={"/products/edit/" + product._id}>
                     <button className="bg-aqua-forest-500 hover:bg-green-600 text-white font-medium py-1 px-3 rounded-lg transition">
-                      Edit
+                      View
                     </button>
                   </Link>
                   <button
@@ -144,9 +156,7 @@ function Products({ swal }) {
               </div>
             ))
           ) : (
-            <p className="text-gray-500">
-              No products found.
-            </p>
+            <p className="text-gray-500">No products found.</p>
           )}
         </div>
       )}
